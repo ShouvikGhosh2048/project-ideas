@@ -1,5 +1,5 @@
 import DescriptionMarkdown from "@/app/components/DescriptionMarkdown";
-import { Idea } from "@/app/lib/definitions";
+import { Idea, IdeaWithCreator } from "@/app/lib/definitions";
 import { sql } from "@vercel/postgres";
 import { notFound } from "next/navigation";
 
@@ -11,15 +11,18 @@ export default async function Idea({ params }: { params: { id: string }}) {
         notFound();
     }
 
-    const ideaQuery = await sql`SELECT title, description FROM project_ideas WHERE id = ${id};`;
+    const ideaQuery = await sql`SELECT project_ideas.id, title, description, username
+        FROM project_ideas, project_idea_users
+        WHERE creator = project_idea_users.id AND project_ideas.id = ${id};`;
     if (ideaQuery.rows.length === 0) {
         notFound();
     }
-    const idea = ideaQuery.rows[0] as Idea;
+    const idea = ideaQuery.rows[0] as IdeaWithCreator;
 
     return (
         <div className="p-5 space-y-5">
             <p className="text-3xl font-bold">{idea.title}</p>
+            <p>Creator: {idea.username}</p>
             <DescriptionMarkdown text={idea.description} />
         </div>
     );
