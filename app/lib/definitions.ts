@@ -4,4 +4,5 @@ export interface Idea {
     description: string,
 };
 
-export type IdeaWithCreator = Idea & { username: string };
+export type IdeaWithCreatorId = Idea & { creator: string };
+export type IdeaWithCreatorUsername = Idea & { username: string };

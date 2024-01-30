@@ -33,7 +33,7 @@ function TitleSVG({ title }: { title: string }) {
     );
 }
 
-export function IdeaCard({ idea }: { idea: Idea }) {
+export default function IdeaCard({ idea }: { idea: Idea }) {
     return (
         <Link href={`/idea/${idea.id}`}>
             <div className="w-52 flex flex-col items-center hover:bg-slate-100 p-2 rounded">

@@ -34,7 +34,7 @@ const FormSchema = z.object({
     }),
 });
 
-export type CreateIdeaState = {
+export type IdeaFormState = {
   errors?: {
     title?: string[];
     description?: string[];
@@ -42,18 +42,18 @@ export type CreateIdeaState = {
   message?: string | null;
 };
 
-export async function createIdea(prevState: CreateIdeaState, formData: FormData) {
-  const validatedFields = FormSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-  });
-
+export async function createIdea(prevState: IdeaFormState, formData: FormData) {
   const authResult = await auth();
   if (!authResult || !authResult.user) {
     return {
       message: "User not logged in.",
-    }
+    };
   }
+
+  const validatedFields = FormSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description"),
+  });
 
   if (!validatedFields.success) {
     return {
@@ -77,4 +77,77 @@ export async function createIdea(prevState: CreateIdeaState, formData: FormData)
 
   revalidatePath("/");
   redirect(`/idea/${idea.id}`);
+}
+
+export async function editIdea(id: string, prevState: IdeaFormState, formData: FormData) {
+  const authResult = await auth();
+  if (!authResult || !authResult.user) {
+    return {
+      message: "User not logged in.",
+    };
+  }
+  const user = authResult.user;
+
+  const validatedFields = FormSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Field errors. Failed to edit idea.",
+    };
+  }
+
+  const { title, description } = validatedFields.data;
+  try {
+    const updateResult = await sql`UPDATE project_ideas SET title = ${title}, description = ${description}
+    WHERE id = ${id} AND creator = ${user.id};`;
+    if (updateResult.rowCount === 0) {
+      return {
+        message: "You can't edit this idea.",
+      }
+    }
+  } catch {
+    return {
+      message: "Database error. Couldn't update the idea."
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/idea/${id}`);
+  redirect(`/idea/${id}`);
+}
+
+export type IdeaDeleteState = {
+  message: string | null,
+};
+
+export async function deleteIdea(id: string) {
+  const authResult = await auth();
+  if (!authResult || !authResult.user) {
+    return {
+      message: "User not logged in."
+    };
+  }
+  const user = authResult.user;
+
+  try {
+    const deleteQuery = await sql`DELETE FROM project_ideas WHERE id = ${id} AND creator = ${user.id};`;
+    if (deleteQuery.rowCount === 0) {
+      return {
+        message: "You can't delete this idea."
+      };
+    }
+  } catch {
+    return {
+      message: "Database error."
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/idea/${id}`); // Do we need to revalidate since idea is deleted?
+  revalidatePath("/profile");
+  redirect("/profile");
 }

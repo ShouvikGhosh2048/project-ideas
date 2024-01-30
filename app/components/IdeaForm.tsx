@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { CreateIdeaState, createIdea } from "../../lib/actions";
+import { IdeaFormState } from "../lib/actions";
 import { useFormState, useFormStatus } from "react-dom";
 import DescriptionMarkdown from "@/app/components/DescriptionMarkdown";
 
-function MarkdownEditor({ disabled }: { disabled: boolean}) {
+interface MarkdownEditorProps {
+    disabled: boolean,
+    initialDescription?: string,
+};
+
+function DescriptionEditor({ disabled, initialDescription }: MarkdownEditorProps) {
     const [showResult, setShowResult] = useState(false);
-    const [text, setText] = useState('');
+    const [text, setText] = useState(initialDescription ?? '');
 
     return (
         <div>
@@ -28,7 +33,14 @@ function MarkdownEditor({ disabled }: { disabled: boolean}) {
 }
 
 // This is a seperate component since useFormStatus requires this.
-function CreateFormInputs({ state }: { state: CreateIdeaState }) {
+interface CreateFormInputsProps {
+    state: IdeaFormState,
+    initialTitle?: string,
+    initialDescription?: string,
+    create: boolean,
+};
+
+function CreateFormInputs({ state, initialTitle, initialDescription, create }: CreateFormInputsProps) {
     const { pending } = useFormStatus();
 
     return (
@@ -42,31 +54,41 @@ function CreateFormInputs({ state }: { state: CreateIdeaState }) {
                 <input name="title"
                     className="border border-slate-400 rounded w-full p-2"
                     placeholder="Title (150 characters)"
+                    defaultValue={initialTitle}
                     required disabled={pending}/>
             </div>
             {state.errors?.description &&
                 state.errors.description.map((error, i) =>
                     <p key={i} className="border border-rose-700 rounded bg-rose-100 p-2 mx-10">{error}</p>)}
             <div>
-                <MarkdownEditor disabled={pending}/>
+                <DescriptionEditor disabled={pending} initialDescription={initialDescription}/>
             </div>
             <div className="flex justify-center">
                 <input type="submit" className={`${pending ? "bg-slate-500" : "bg-slate-900"} text-white px-3 py-2 rounded cursor-pointer`}
-                        value="Create idea" disabled={pending}/>
+                        value={create ? "Create idea" : "Edit idea"} disabled={pending}/>
             </div>
         </>
     );
 }
 
-export default function CreateIdeaForm() {
-    const [state, dispatch] = useFormState(createIdea, {
+interface IdeaFormProps {
+    action: (prevState: IdeaFormState, formData: FormData) => Promise<IdeaFormState>,
+    initialTitle?: string,
+    initialDescription?: string,
+    create: boolean,
+};
+
+export default function IdeaForm({ action, initialTitle, initialDescription, create }: IdeaFormProps) {
+    const [state, dispatch] = useFormState(action, {
         message: null as null,
         errors: {}
-    } as CreateIdeaState);
+    } as IdeaFormState);
 
     return (
         <form action={dispatch} className="space-y-5">
-            <CreateFormInputs state={state} />
+            <CreateFormInputs state={state}
+                initialTitle={initialTitle} initialDescription={initialDescription}
+                create={create}/>
         </form>
     );
 }

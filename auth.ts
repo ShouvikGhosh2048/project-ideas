@@ -12,8 +12,11 @@ export const {
         authorized({ auth, request: { nextUrl }}) {
             const isLoggedIn = !!auth?.user;
 
-            const logInURLs = ["/idea/create", "/profile"];
-            if (logInURLs.includes(nextUrl.pathname) && !isLoggedIn) {
+            if (!isLoggedIn && (
+                nextUrl.pathname === "/idea/create"
+                || nextUrl.pathname === "/profile"
+                || nextUrl.pathname.match(/\/idea\/\d*\/edit/)
+            )) {
                 return false;
             }
 
@@ -29,7 +32,7 @@ export const {
         },
         async session(params) {
             if ("token" in params && params.session.user) {
-                params.session.user.id = params.token.id as string;
+                params.session.user.id = `${params.token.id}`;
             }
             return params.session;
         }
@@ -52,7 +55,7 @@ export const {
                     name: profile.login,
                     email: profile.email,
                     id: `${profile.id}`,
-                }
+                };
             }
         }),
     ],

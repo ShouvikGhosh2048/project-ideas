@@ -1,5 +1,6 @@
+import IdeaForm from "@/app/components/IdeaForm";
+import { createIdea } from "@/app/lib/actions";
 import { auth } from "@/auth";
-import CreateIdeaForm from "./CreateIdeaForm";
 import { redirect } from "next/navigation";
 
 export default async function CreateIdea() {
@@ -12,7 +13,7 @@ export default async function CreateIdea() {
     return (
         <div className="max-w-xl mx-auto p-10">
             <p className="text-center text-3xl mb-5">Create new idea</p>
-            <CreateIdeaForm/>
+            <IdeaForm action={createIdea} create={true}/>
         </div>
     );
 }
