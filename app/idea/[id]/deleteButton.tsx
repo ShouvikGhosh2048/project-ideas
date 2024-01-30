@@ -15,7 +15,6 @@ interface DeleteFormElementsProps {
 
 function DeleteFormElements({ setDialogOpen }: DeleteFormElementsProps) {
     const { pending } = useFormStatus();
-    console.log(pending);
 
     return (
         <>

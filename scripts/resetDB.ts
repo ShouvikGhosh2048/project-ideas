@@ -3,6 +3,7 @@ import { sql } from '@vercel/postgres';
 async function resetDB() {
     // https://gist.github.com/tonybruess/9405134
     // https://docs.github.com/en/enterprise-server@3.10/admin/identity-and-access-management/iam-configuration-reference/username-considerations-for-external-authentication#:~:text=Usernames%20must%20not%20exceed%2039%20characters.
+    await sql`DROP TABLE IF EXISTS project_likes`;
     await sql`DROP TABLE IF EXISTS project_ideas;`;
     await sql`DROP TABLE IF EXISTS project_idea_users;`;
 
@@ -17,6 +18,12 @@ async function resetDB() {
             description varchar(500) NOT NULL,
             creator varchar(15) REFERENCES project_idea_users
         );`;
+    
+    await sql`CREATE TABLE project_likes(
+        user_id varchar(15) REFERENCES project_idea_users,
+        project_id integer REFERENCES project_ideas,
+        CONSTRAINT user_and_project PRIMARY KEY(user_id, project_id)
+    )`;
 }
 
 resetDB();

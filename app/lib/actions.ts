@@ -105,9 +105,7 @@ export async function editIdea(id: string, prevState: IdeaFormState, formData: F
     const updateResult = await sql`UPDATE project_ideas SET title = ${title}, description = ${description}
     WHERE id = ${id} AND creator = ${user.id};`;
     if (updateResult.rowCount === 0) {
-      return {
-        message: "You can't edit this idea.",
-      }
+      redirect("/profile");
     }
   } catch {
     return {
@@ -116,6 +114,7 @@ export async function editIdea(id: string, prevState: IdeaFormState, formData: F
   }
 
   revalidatePath("/");
+  revalidatePath('/profile');
   revalidatePath(`/idea/${id}`);
   redirect(`/idea/${id}`);
 }
@@ -136,9 +135,7 @@ export async function deleteIdea(id: string) {
   try {
     const deleteQuery = await sql`DELETE FROM project_ideas WHERE id = ${id} AND creator = ${user.id};`;
     if (deleteQuery.rowCount === 0) {
-      return {
-        message: "You can't delete this idea."
-      };
+      redirect("/profile");
     }
   } catch {
     return {
@@ -150,4 +147,36 @@ export async function deleteIdea(id: string) {
   revalidatePath(`/idea/${id}`); // Do we need to revalidate since idea is deleted?
   revalidatePath("/profile");
   redirect("/profile");
+}
+
+export async function createLike(projectId: string) {
+  const authResult = await auth();
+  if (!authResult || !authResult.user) {
+    return 'User not logged in.';
+  }
+  const user = authResult.user;
+
+  try {
+    await sql`INSERT INTO project_likes(user_id, project_id) VALUES (${user.id}, ${projectId})`;
+    revalidatePath(`/idea/${projectId}`);
+    return 'Success';
+  } catch {
+    return 'Database error';
+  }
+}
+
+export async function deleteLike(projectId: string) {
+  const authResult = await auth();
+  if (!authResult || !authResult.user) {
+    return 'User not logged in.';
+  }
+  const user = authResult.user;
+
+  try {
+    await sql`DELETE FROM project_likes WHERE project_id = ${projectId} AND user_id = ${user.id}`;
+    revalidatePath(`/idea/${projectId}`);
+    return 'Success';
+  } catch {
+    return 'Database error';
+  }
 }
