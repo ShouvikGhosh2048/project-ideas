@@ -28,6 +28,11 @@ export default async function Idea({ params }: { params: { id: string } }) {
         return [userId, likeResult.rows[0].count !== '0'] as [undefined | string, boolean];
     };
 
+    const getLikesCount = async () => {
+        const likesCountQuery = await sql`SELECT COUNT(*) FROM project_likes WHERE project_id = ${id}`;
+        return Number(likesCountQuery.rows[0].count);
+    }
+
     const getIdea = async () => {
         const ideaQuery = await sql`SELECT project_ideas.id, title, description, username, creator
             FROM project_ideas, project_idea_users
@@ -39,7 +44,7 @@ export default async function Idea({ params }: { params: { id: string } }) {
         return ideaQuery.rows[0] as IdeaWithCreatorUsername & { creator: string };
     }
 
-    const [[userId, userLiked], idea] = await Promise.all([getUserAndWhetherUserLiked(), getIdea()]);
+    const [[userId, userLiked], idea, likesCount] = await Promise.all([getUserAndWhetherUserLiked(), getIdea(), getLikesCount()]);
     if (idea === null) {
         notFound();
     }
@@ -56,8 +61,11 @@ export default async function Idea({ params }: { params: { id: string } }) {
                         <DeleteButton action={deleteIdeaWithId} />
                     </>
                 )}
+                {userId === undefined && (
+                    <span>{likesCount} like{likesCount !== 1 ? 's' : ''}</span>
+                )}
                 {userId !== undefined && (
-                    <LikeButton projectId={id} initialState={userLiked} />
+                    <LikeButton projectId={id} defaultLiked={userLiked} defaultLikeCount={likesCount} />
                 )}
             </div>
             <DescriptionMarkdown text={idea.description} />
